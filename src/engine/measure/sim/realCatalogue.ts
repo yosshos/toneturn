@@ -12,12 +12,21 @@ import type { AreaCatalogue } from './catalogue';
 import type { Exercise } from './rank';
 
 const AREA_OF: Partial<Record<LadderRung['block'], string>> = { A: 'scales', B: 'arpeggios', S: 'harmony', E: 'harmony', D: 'independence', F: 'line-jazz' };
+/**
+ * Bass has the spec's 3 laddered level areas (SPEC-HOLISTIC-2 §1.10: scales, arpeggios/chord tones, walking/groove; reading
+ * and rhythm/time are not on the key ladder). Mapping (v14): A the scale's forms, D the hands (fingering, shifts, string
+ * skipping: scale technique) and F the Harris scale language → scales; S the spine (diatonic 3rds, 7th arpeggios through
+ * the scale) and B the arpeggios → arpeggios (chord tones); E the changes (chord tones through a progression, walking a
+ * ii–V–I) → walking (walking/groove). Before v14 the harness scored bass with the piano's 5 areas.
+ */
+const BASS_AREA_OF: Partial<Record<LadderRung['block'], string>> = { A: 'scales', D: 'scales', F: 'scales', S: 'arpeggios', B: 'arpeggios', E: 'walking' };
 
-export function realCatalogues(inst: LadderInst): AreaCatalogue[] {
+/** `legacyBassAreas`: score bass with the piano's 5 areas, as the harness did before v14 (to reproduce round 17 runs). */
+export function realCatalogues(inst: LadderInst, legacyBassAreas = false): AreaCatalogue[] {
   const by = new Map<string, Map<string, Exercise>>();
   for (const g of ['major', 'minor'] as const) {
     for (const r of [...ladderRungs(g, inst), ...laterRungs(g, inst)]) {
-      const area = AREA_OF[r.block];
+      const area = (inst === 'bass' && !legacyBassAreas ? BASS_AREA_OF : AREA_OF)[r.block];
       if (!area) continue;
       const m = by.get(area) ?? new Map<string, Exercise>();
       by.set(area, m);
@@ -28,7 +37,7 @@ export function realCatalogues(inst: LadderInst): AreaCatalogue[] {
       }
     }
   }
-  return [...by.entries()].map(([area, m]) => ({ name: `${inst}/${area}`, exercises: [...m.values()], tempo: area === 'scales' || area === 'arpeggios' || area === 'independence' || area === 'line-jazz' }));
+  return [...by.entries()].map(([area, m]) => ({ name: `${inst}/${area}`, exercises: [...m.values()], tempo: area === 'scales' || area === 'arpeggios' || area === 'independence' || area === 'line-jazz' || area === 'walking' }));
 }
 
 /** Exercises per tier, for the report. */

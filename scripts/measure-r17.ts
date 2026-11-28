@@ -1,5 +1,7 @@
 // Round 17 measurement review (docs/REVIEW-HOLISTIC-round17-measurement.md): the studies behind the answers to
-// review items #1-#4 and the minor notes. Report: docs/MEASURE-R17-REPORT.txt.
+// review items #1-#4 and the minor notes. Report: docs/MEASURE-R17-REPORT.txt (run on the v13 harness defaults).
+// Since v14 the harness defaults are G + H10 + shared supply, so "P0" rows here now run on those; the v14 numbers are in
+// scripts/measure-v14.ts / docs/MEASURE-V14-REPORT.txt.
 // Usage: npm run measure-r17               (full precision, ~15-25 min)
 //        npm run measure-r17 -- --quick    (fewer runs)
 //        npm run measure-r17 -- --only=1,3 (some sections)

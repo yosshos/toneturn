@@ -16,6 +16,8 @@ scripts/.measure-variants.mjs
 scripts/.measure-variants.log
 scripts/.measure-r17.mjs
 scripts/.measure-r17.log
+scripts/.measure-v14.mjs
+scripts/.measure-v14.log
 scripts/voice/.inventory.mjs
 scripts/voice/.inventory.log
 scripts/voice/.lines.json

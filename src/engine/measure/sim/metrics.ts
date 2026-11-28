@@ -8,7 +8,7 @@ import { Learner } from './learner';
 import { rankableTiers } from './rank';
 import type { NonTempoMode } from './placement';
 import { runReadingTier, simulateReadingArea } from './readingSim';
-import { H10_BASELINE, H10_ON, simulate, type DailyRecord, type H10Opts, type PlannerConfig, type SimOptions } from './simulate';
+import { H10_BASELINE, H10_ON, h10Default, simulate, type DailyRecord, type H10Opts, type PlannerConfig, type SimOptions } from './simulate';
 import { logistic, logit, muForMarginal, quantile } from './stats';
 
 // ---------------------------------------------------------------- 1. P(item pass | cold clean rate) (§1.6)
@@ -126,7 +126,7 @@ export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs
     const d: number[] = [];
     let reached = 0;
     for (let r = 0; r < runs; r++) {
-      const res = simulate({ catalogue: cat, learner: L, planner: { ...planner, practiceDaysPerWeek: dpw }, days: cap, seed: childSeed(seed, r * 31 + i), placedTier: from ?? 0, rankHW: from, stopWhenRank: to, noPlacementCorrection: true, variant, ...extra });
+      const res = simulate({ catalogue: cat, learner: L, days: cap, seed: childSeed(seed, r * 31 + i), placedTier: from ?? 0, rankHW: from, stopWhenRank: to, noPlacementCorrection: true, variant, ...extra, planner: { ...planner, ...extra.planner, practiceDaysPerWeek: dpw } });
       const day = res.rankDay.get(to);
       if (day !== undefined) {
         reached++;
@@ -145,6 +145,8 @@ export interface DemotionReport {
   wrongRate: number;
   /** The same, with the truth = the tier's fresh-cell p at the tier left (the tier estimand, round 17 #4). */
   wrongRateTier: number;
+  /** The same, with the truth = the mean fresh-cell p over the decision window's looks (their own tiers, >= the tier left). */
+  wrongRateWindow: number;
   /** Share with any slump. */
   anySlump: number;
   /** 80 % interval coverage of the window posterior (n_eff) and of the naive posterior (raw n), against the window's own cells. */
@@ -190,6 +192,7 @@ export function wrongDemotion(pAtRank: number, runs: number, seed: number, o: Cu
   L.theta0 = thetaForP(pAtRank, R, L);
   let wrong = 0;
   let wrongT = 0;
+  let wrongW = 0;
   let any = 0;
   let rose = 0;
   let nLooks = 0;
@@ -198,10 +201,11 @@ export function wrongDemotion(pAtRank: number, runs: number, seed: number, o: Cu
   const cal = { n: 0, hits: 0, naive: 0, bias: 0, sq: 0, th: 0, tn: 0, tb: 0, tsq: 0 };
   const grid = (o.sim?.calibRhoC ?? []).map((rhoC) => ({ rhoC, hits: 0, tierHits: 0 }));
   for (let r = 0; r < runs; r++) {
-    const res = simulate({ catalogue: cat, planner: { practiceDaysPerWeek: o.dpw ?? 4, confirmSlots: o.slots ?? 2 }, days: burn + win, seed: childSeed(seed, r), placedTier: R, noPlacementCorrection: true, ...o.sim, learner: L });
+    const res = simulate({ catalogue: cat, days: burn + win, seed: childSeed(seed, r), placedTier: R, noPlacementCorrection: true, ...o.sim, planner: { ...o.sim?.planner, practiceDaysPerWeek: o.dpw ?? 4, confirmSlots: o.slots ?? 2 }, learner: L });
     const inWin = res.slumps.filter((s) => s.day >= burn);
     if (inWin.some((s) => s.truth >= 0.75)) wrong++;
     if (inWin.some((s) => s.tierTruth >= 0.75)) wrongT++;
+    if (inWin.some((s) => s.windowTierTruth >= 0.75)) wrongW++;
     if (inWin.length) any++;
     if ((res.finalRank ?? -1) > R) rose++;
     for (const s of inWin) truths.push(s.truth);
@@ -225,7 +229,7 @@ export function wrongDemotion(pAtRank: number, runs: number, seed: number, o: Cu
   }
   const n = Math.max(1, cal.n);
   return {
-    wrongRate: wrong / runs, wrongRateTier: wrongT / runs, anySlump: any / runs,
+    wrongRate: wrong / runs, wrongRateTier: wrongT / runs, wrongRateWindow: wrongW / runs, anySlump: any / runs,
     coverage: cal.hits / n, naiveCoverage: cal.naive / n, bias: cal.bias / n, rmse: Math.sqrt(cal.sq / n),
     tierCoverage: cal.th / n, naiveTierCoverage: cal.tn / n, tierBias: cal.tb / n, tierRmse: Math.sqrt(cal.tsq / n),
     grid: grid.map((g) => ({ rhoC: g.rhoC, coverage: g.hits / n, tierCoverage: g.tierHits / n })),
@@ -239,7 +243,7 @@ export function wrongDemotion(pAtRank: number, runs: number, seed: number, o: Cu
  * back at its pre-dip value (not at rank: rank often sits above the learner's cold level, see report), plus the share
  * of learners whose pre-dip current form was already below rank.
  */
-export function repromotion(runs: number, seed: number, o: CurrentFormRun & { pAtRank?: number; dipLogit?: number; dipDays?: number; burn?: number; after?: number } = {}): { slumped: number; recovered: number; medianDays: number; p90Days: number; cfBelowRankBefore: number } {
+export function repromotion(runs: number, seed: number, o: CurrentFormRun & { pAtRank?: number; dipLogit?: number; dipDays?: number; burn?: number; after?: number } = {}): { slumped: number; recovered: number; medianDays: number; p90Days: number; cfBelowRankBefore: number; recoveredHonest: number; medianDaysHonest: number; p90DaysHonest: number; preCfAboveHonest: number; recoveredTrue: number; medianDaysTrue: number; p90DaysTrue: number; preCfAboveTrue: number } {
   const cat = defaultCatalogue();
   const R = 3;
   const burn = o.burn ?? 90;
@@ -251,9 +255,16 @@ export function repromotion(runs: number, seed: number, o: CurrentFormRun & { pA
   let recovered = 0;
   let below = 0;
   const days: number[] = [];
+  const daysH: number[] = [];
+  let recoveredH = 0;
+  let aboveH = 0;
+  const daysT: number[] = [];
+  let recoveredT = 0;
+  let aboveT = 0;
+  const truthL = new Learner({ ...L0, theta0 }, mulberry32(1));
   for (let r = 0; r < runs; r++) {
     const L: LearnerParams = { ...L0, theta0, shift: (d) => (d >= burn && d < burn + dipDays ? -(o.dipLogit ?? 3) : 0) };
-    const res = simulate({ catalogue: cat, planner: { practiceDaysPerWeek: o.dpw ?? 4, confirmSlots: o.slots ?? 2 }, days: burn + dipDays + after, seed: childSeed(seed, r), placedTier: R, noPlacementCorrection: true, ...o.sim, learner: L, recordDaily: true });
+    const res = simulate({ catalogue: cat, days: burn + dipDays + after, seed: childSeed(seed, r), placedTier: R, noPlacementCorrection: true, ...o.sim, planner: { ...o.sim?.planner, practiceDaysPerWeek: o.dpw ?? 4, confirmSlots: o.slots ?? 2 }, learner: L, recordDaily: true });
     const pre = res.daily[burn - 1];
     if (pre.cf !== null && pre.rank !== null && pre.cf < pre.rank) below++;
     const dipSlump = res.slumps.some((s) => s.day >= burn && s.day < burn + dipDays + 14);
@@ -265,8 +276,27 @@ export function repromotion(runs: number, seed: number, o: CurrentFormRun & { pA
       recovered++;
       days.push(back.day - end);
     } else days.push(after);
+    // The honest target: the pre-dip current form, capped at the highest tier where the learner's fresh-cell p (no dip)
+    // is >= 0.6, the re-promotion bar: current form is not meant to climb back to a tier the learner cannot hold.
+    let honest = -1;
+    for (let t = 0; t <= (pre.cf as number); t++) if (truthL.trueTierP(t) >= 0.6) honest = t;
+    if (honest < (pre.cf as number)) aboveH++;
+    const backH = res.daily.find((d) => d.day >= end && d.cf !== null && d.cf >= honest);
+    if (backH) {
+      recoveredH++;
+      daysH.push(backH.day - end);
+    } else daysH.push(after);
+    // The learner's true tier (fresh-cell p >= 0.75), capped at the pre-dip current form.
+    let tt = -1;
+    for (let t = 0; t <= (pre.cf as number); t++) if (truthL.trueTierP(t) >= 0.75) tt = t;
+    if (tt < (pre.cf as number)) aboveT++;
+    const backT = res.daily.find((d) => d.day >= end && d.cf !== null && d.cf >= tt);
+    if (backT) {
+      recoveredT++;
+      daysT.push(backT.day - end);
+    } else daysT.push(after);
   }
-  return { slumped: slumped / runs, recovered: recovered / Math.max(1, slumped), medianDays: quantile(days, 0.5), p90Days: quantile(days, 0.9), cfBelowRankBefore: below / runs };
+  return { slumped: slumped / runs, recovered: recovered / Math.max(1, slumped), medianDays: quantile(days, 0.5), p90Days: quantile(days, 0.9), cfBelowRankBefore: below / runs, recoveredHonest: recoveredH / Math.max(1, slumped), medianDaysHonest: quantile(daysH, 0.5), p90DaysHonest: quantile(daysH, 0.9), preCfAboveHonest: aboveH / Math.max(1, slumped), recoveredTrue: recoveredT / Math.max(1, slumped), medianDaysTrue: quantile(daysT, 0.5), p90DaysTrue: quantile(daysT, 0.9), preCfAboveTrue: aboveT / Math.max(1, slumped) };
 }
 
 // ---------------------------------------------------------------- 5. Climbs, stalls, placement, gaming (§1.3, §1.7)
@@ -290,6 +320,8 @@ export interface ClimbReport {
   stalls: number;
   worstStall: number;
   worstStallTier: number | null;
+  /** Every run's longest stall (days). */
+  longestStalls: number[];
   /** Median true marginal cold p at the new rank tier, at the moment of each rank rise. */
   medianPAtRankUp: number;
   /** Share of rank rises where that p was < 0.5. */
@@ -316,8 +348,10 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
   let worstTier: number | null = null;
   const ups: number[] = [];
   const passCellPs: number[] = [];
+  const longestStalls: number[] = [];
   for (let r = 0; r < runs; r++) {
-    const res = simulate({ catalogue: cat, learner: lp, planner, days, seed: childSeed(seed, r), variant, ...extra });
+    const res = simulate({ catalogue: cat, learner: lp, days, seed: childSeed(seed, r), variant, ...extra, planner: { ...planner, ...extra.planner } });
+    longestStalls.push(res.longestStall);
     for (const u of res.rankTruth) ups.push(u.p);
     for (const x of res.passTruth) passCellPs.push(x.cellP);
     const t = [...res.rankDay.entries()].filter(([k]) => k >= target).map(([, v]) => v);
@@ -332,7 +366,7 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
       worstTier = res.stallTier;
     }
   }
-  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier, medianPAtRankUp: quantile(ups, 0.5), rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), rankUps: ups, passCellPs };
+  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier, longestStalls, medianPAtRankUp: quantile(ups, 0.5), rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), rankUps: ups, passCellPs };
 }
 
 /** The tier a learner truly is at: the highest tier with marginal cold p ≥ 0.75. */
@@ -403,6 +437,9 @@ export interface VariantReport {
   passBelowHalf: number;
   /** (d) learners with a stall >= 42 days, and climbs that missed a rankable tier. */
   stalls: number;
+  /** The longest stall over all climbs, and every climb's longest stall. */
+  worstStall: number;
+  longestStalls: number[];
   missedTop: number;
   climbs: number;
 }
@@ -432,15 +469,17 @@ export function variantStudy(variant: PassVariant, cats: AreaCatalogue[], seed: 
   let stalls = 0;
   let missed = 0;
   let climbs = 0;
+  const longest: number[] = [];
   for (const cat of cats) {
     const c = climb(cat, o.climbRuns, seed + 60, 365, { ...STEADY_LEARNER(), ...lp }, {}, variant, extra);
     stalls += c.stalls;
+    longest.push(...c.longestStalls);
     missed += Math.round((1 - c.reachedAll) * o.climbRuns);
     climbs += o.climbRuns;
     ups.push(...c.rankUps);
     cellPs.push(...c.passCellPs);
   }
-  return { variant, evidence, guard: !!extra.rank?.tierGuard, pass28, tierDays, rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), medianPAtRankUp: quantile(ups, 0.5), passBelowHalf: cellPs.filter((p) => p < 0.5).length / Math.max(1, cellPs.length), stalls, missedTop: missed, climbs };
+  return { variant, evidence, guard: !!extra.rank?.tierGuard, pass28, tierDays, rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), medianPAtRankUp: quantile(ups, 0.5), passBelowHalf: cellPs.filter((p) => p < 0.5).length / Math.max(1, cellPs.length), stalls, worstStall: Math.max(0, ...longest), longestStalls: longest, missedTop: missed, climbs };
 }
 
 // ---------------------------------------------------------------- 7. Stationary-learner honesty (round 17 review #1)
@@ -460,6 +499,18 @@ export interface StationaryReport {
   /** Rank rises, and the share at a fresh-cell p < 0.5 at the new tier. */
   rises: number;
   risesBelowHalf: number;
+  /**
+   * The same against the tier's own material as practised (item-practice gain counted, each exercise × key of the tier
+   * at its own visit count, unoffered cells at 0): equals `risesBelowHalf` when itemGain is 0.
+   */
+  risesBelowHalfCat: number;
+  /** Median of that catalogue truth at the rises. */
+  risesCatMedian: number;
+  /**
+   * The same against the fresh-cell p at the floor of the probe band (0.95 × target): the tempo at which the tempo model
+   * plays counting checks and pass probes (§1.9: the probe band 0.95–1.0 × target counts as "at target").
+   */
+  risesBelowHalfProbe: number;
   /** Passes, and the share at a cell p < 0.5 (the cell's own truth, item practice included) / a tier p < 0.5 (fresh cell). */
   passes: number;
   passesCellBelowHalf: number;
@@ -485,6 +536,8 @@ export function stationaryHonesty(p: number, runs: number, seed: number, o: { st
   const pFinal: number[] = [];
   let above = 0;
   const rises: number[] = [];
+  const risesCat: number[] = [];
+  const risesProbe: number[] = [];
   const cellPs: number[] = [];
   const tierPs: number[] = [];
   for (let r = 0; r < runs; r++) {
@@ -493,14 +546,18 @@ export function stationaryHonesty(p: number, runs: number, seed: number, o: { st
     finals.push(f);
     if (res.finalRank !== null) pFinal.push(tp(res.finalRank));
     if (f > (trueT ?? -1)) above++;
-    for (const u of res.rankTruth) rises.push(u.p);
+    for (const u of res.rankTruth) {
+      rises.push(u.p);
+      risesCat.push(u.pCat);
+      risesProbe.push(truth.trueTierP(u.tier, 0, 0.95));
+    }
     for (const x of res.passTruth) {
       cellPs.push(x.cellP);
       tierPs.push(x.tierP);
     }
   }
   const below = (xs: number[]) => xs.filter((x) => x < 0.5).length / Math.max(1, xs.length);
-  return { p, startTier: S, trueTier: trueT, finalRankMedian: quantile(finals, 0.5), finalRankP90: quantile(finals, 0.9), pAtFinalRankMedian: quantile(pFinal, 0.5), aboveTrueTier: above / runs, rises: rises.length, risesBelowHalf: below(rises), passes: cellPs.length, passesCellBelowHalf: below(cellPs), passesTierBelowHalf: below(tierPs) };
+  return { p, startTier: S, trueTier: trueT, finalRankMedian: quantile(finals, 0.5), finalRankP90: quantile(finals, 0.9), pAtFinalRankMedian: quantile(pFinal, 0.5), aboveTrueTier: above / runs, rises: rises.length, risesBelowHalf: below(rises), risesBelowHalfCat: below(risesCat), risesCatMedian: quantile(risesCat, 0.5), risesBelowHalfProbe: below(risesProbe), passes: cellPs.length, passesCellBelowHalf: below(cellPs), passesTierBelowHalf: below(tierPs) };
 }
 
 // ---------------------------------------------------------------- 8. H10: offered challenge tracks ability (round 17 review #2)
@@ -567,7 +624,7 @@ export function h10Study(name: string, runs: number, seed: number, o: { h10?: Pa
   let overCap = 0;
   const toTop: number[] = [];
   for (let r = 0; r < runs; r++) {
-    const res = simulate({ catalogue: cat, learner: lp, days, seed: childSeed(seed, r), placedTier: 0, noPlacementCorrection: true, ...o.sim, h10: { ...H10_BASELINE, ...o.h10 }, recordDaily: true });
+    const res = simulate({ catalogue: cat, learner: lp, days, seed: childSeed(seed, r), placedTier: 0, noPlacementCorrection: true, ...o.sim, h10: { ...h10Default(cat), ...o.h10 }, recordDaily: true });
     const top = tiers[tiers.length - 1];
     toTop.push(res.rankDay.get(top) ?? days);
     const wk: (H10Week | null)[] = [];
@@ -628,5 +685,5 @@ export function h10Study(name: string, runs: number, seed: number, o: { h10?: Pa
 export const H10_PLANNERS: { name: string; h10: Partial<H10Opts> }[] = [
   { name: 'v13 planner (tempo model only)', h10: H10_BASELINE },
   { name: 'readiness entry only', h10: { ...H10_BASELINE, readiness: true } },
-  { name: 'H10: readiness + challenge point + no-easier', h10: H10_ON },
+  { name: 'H10 default: readiness + challenge point + no-easier', h10: H10_ON },
 ];

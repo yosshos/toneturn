@@ -3,7 +3,10 @@
 // §1.6 item pass, H8 rank (§1.7), the entry ceiling (§1.3), the placement correction (§1.3) and the current-form
 // posterior (§1.7). Pure.
 //
-// Round 17 options (all off by default, so the v13 numbers reproduce exactly; the default RNG stream is unchanged):
+// Defaults (owner 2026-11-28, SPEC-HOLISTIC-2 v14): rank = H8 + the tier guard G (RANK_GUARDED; ungated H8 = RANK_FIX);
+// supply = SHARED_SUPPLY (a per-session slot cap shared across areas + FSRS-review looks; PER_AREA_SUPPLY = v13); the
+// planner = H10 in full (readiness entry, challenge point, no-easier; the tempo model in tempo areas; H10_OFF = v13).
+// Round 17 options:
 // - `evidence`: where the item pass's share test reads its counting checks (P0 cell, P1 pooled per exercise, P2 ≥ 4
 //   checks, P3 both; itemPass.ts);
 // - `supply`: confirmation slots as a per-SESSION cap shared across the instrument's areas, plus modelled FSRS-review
@@ -20,7 +23,7 @@ import { DEFAULT_PASS_EVIDENCE, ItemPassTracker, poolKey, type PassEvidence, typ
 import { Learner, TEMPO_STEP, tempoDifficulty, type LearnerParams } from './learner';
 import { initPlacement, isPlaced, nonTempoPlacementDay, tempoPlacementDay, type NonTempoMode, type PlacementState } from './placement';
 import { mulberry32, normal, randInt, type Rng } from './prng';
-import { entryCeiling, keysOf, nonEmptyTiers, passedExerciseIds, rankableTiers, RANK_FIX, updateRankHW, type CountingCheck, type Exercise, type PassRecord, type RankOpts } from './rank';
+import { DEFAULT_RANK, entryCeiling, keysOf, nonEmptyTiers, passedExerciseIds, rankableTiers, tierGuardOk, updateRankHW, type CountingCheck, type Exercise, type PassRecord, type RankOpts } from './rank';
 import { betaQuantile, logit, quantile } from './stats';
 import { THRESHOLD, thresholdEstimate, type ColdTrial } from './threshold';
 
@@ -46,9 +49,24 @@ export interface PlannerConfig {
    * (needed by §1.7's key rule on 1-exercise tiers, or when 2 passes landed in one key). Default true.
    */
   offerNewKeys: boolean;
+  /**
+   * With the rank tier guard: while the guard fails at the lowest tier t (rank < t <= the entered top) that already holds
+   * a pass, one working slot per session goes to a fresh cell at t (an active cell there, else an unpassed exercise at t,
+   * else a passed one in a new key), so the guard's record keeps getting fresh checks (§1.7 step 6); and a passed exercise
+   * is re-offered in a new key only while its tier needs it (key rule or guard). Default true; false = the round 17 G
+   * planner (re-offer always, no reserved slot), which stalled 1 / 300 climbs.
+   */
+  guardReserve: boolean;
+  /**
+   * Explored in v14 for the item-gain sensitivity, NOT adopted (default off; see docs/MEASURE-V14-REPORT.txt / §9.1): a
+   * cell shelved with no counting check at all is logged as one miss in the guard's record.
+   */
+  guardShelvedMiss: boolean;
+  /** Explored, NOT adopted (default Infinity): only a cell's first `guardPerCell` counting checks enter the guard's record. */
+  guardPerCell: number;
 }
 
-export const DEFAULT_PLANNER: PlannerConfig = { practiceDaysPerWeek: 4, secondSessionProb: 0.15, workCellsPerSession: 4, warmTakesPerVisit: 4, confirmSlots: 2, sessionMinutes: 20, maxVisitsPerCell: 12, frontierWeight: 3, offerNewKeys: true };
+export const DEFAULT_PLANNER: PlannerConfig = { practiceDaysPerWeek: 4, secondSessionProb: 0.15, workCellsPerSession: 4, warmTakesPerVisit: 4, confirmSlots: 2, sessionMinutes: 20, maxVisitsPerCell: 12, frontierWeight: 3, offerNewKeys: true, guardReserve: true, guardShelvedMiss: false, guardPerCell: Infinity };
 
 /** The supply of looks (§1.7 "Supply and slots"; round 17 review #3). */
 export interface SupplyOpts {
@@ -71,6 +89,8 @@ export interface SupplyOpts {
 export const PER_AREA_SUPPLY: SupplyOpts = { mode: 'perArea', sessionCap: 2, areas: 1, reviews: false, reviewsPerSession: 0, fsrsFirst: 3, fsrsGrowth: 2.5, fsrsLapse: 0.3 };
 /** The spec's supply: 3 slots per session shared by 4 areas practised that session, plus FSRS-review looks. */
 export const SHARED_SUPPLY: SupplyOpts = { mode: 'shared', sessionCap: 3, areas: 4, reviews: true, reviewsPerSession: 2, fsrsFirst: 3, fsrsGrowth: 2.5, fsrsLapse: 0.3 };
+/** The default supply (owner 2026-11-28): shared slots + FSRS-review looks. */
+export const DEFAULT_SUPPLY: SupplyOpts = SHARED_SUPPLY;
 
 /** H10 (§1.7a) options. All off = the v13 planner (every take at target, new cells by `frontierWeight`). */
 export interface H10Opts {
@@ -96,6 +116,11 @@ export const H10_OFF: H10Opts = { tempo: false, readiness: false, challenge: fal
 export const H10_BASELINE: H10Opts = { ...H10_OFF, tempo: true };
 /** The tempo model, readiness entry, the challenge point and the no-easier rule (§1.7a as proposed in round 17). */
 export const H10_ON: H10Opts = { ...H10_OFF, tempo: true, readiness: true, challenge: true, noEasier: true };
+/**
+ * The default planner (owner 2026-11-28: H10 in full): H10_ON, with the tempo model only in tempo areas (a fixed-tempo
+ * area such as harmony has no tempo axis). `h10: H10_OFF` gives the v13 planner.
+ */
+export const h10Default = (cat: AreaCatalogue): H10Opts => ({ ...H10_ON, tempo: cat.tempo });
 
 export interface SimOptions {
   catalogue: AreaCatalogue;
@@ -112,7 +137,7 @@ export interface SimOptions {
   variant?: PassVariant;
   /** Where the share test reads its counting checks (default P0 = per cell, the v13 rule). */
   evidence?: PassEvidence;
-  /** Rank options (default: fix 1, rank needs >= 2 distinct exercises, keys = union). */
+  /** Rank options (default DEFAULT_RANK = H8 + the tier guard; RANK_FIX = ungated H8). */
   rank?: RankOpts;
   /** The non-tempo placement-correction rule (default DEFAULT_NON_TEMPO). */
   nonTempoMode?: NonTempoMode;
@@ -121,11 +146,11 @@ export interface SimOptions {
    * passed cells too; false = only working (unpassed) cells (the v13 harness).
    */
   n1AllCells?: boolean;
-  /** Look supply (default PER_AREA_SUPPLY = the v13 harness). */
+  /** Look supply (default DEFAULT_SUPPLY = shared slots + FSRS reviews; PER_AREA_SUPPLY = the v13 harness). */
   supply?: Partial<SupplyOpts>;
   /** Calibration grid: coverage is also scored for these ρ_c values (evaluation only; decisions use currentForm.rhoC). */
   calibRhoC?: number[];
-  /** H10 options (default H10_OFF). */
+  /** H10 options (default h10Default(catalogue) = H10 in full; H10_OFF = the v13 planner). */
   h10?: Partial<H10Opts>;
   /** Rank-gaming probe: the planner only ever offers this exercise, in a new key each time. */
   onlyExercise?: string;
@@ -177,6 +202,11 @@ export interface SlumpEvent {
   truth: number;
   /** True marginal cold p of a fresh cell at the tier demoted from. */
   tierTruth: number;
+  /**
+   * The tier estimand of the decision's own window: the mean fresh-cell p over the window's looks (each at its cell's
+   * tier; the window at tier t reads passed cells at tiers >= t), as the calibration scores it.
+   */
+  windowTierTruth: number;
 }
 
 /** Calibration of the window posterior's 80 % interval, scored against two estimands (round 17 review #4). */
@@ -203,7 +233,7 @@ export interface SimResult {
   /** First day rank reached each tier. */
   rankDay: Map<number, number>;
   /** At each rank rise: the new rank and the learner's true marginal cold p at that tier (a fresh cell). */
-  rankTruth: { tier: number; day: number; p: number }[];
+  rankTruth: { tier: number; day: number; p: number; pCat: number }[];
   finalRank: number | null;
   finalCf: number | null;
   slumps: SlumpEvent[];
@@ -216,6 +246,8 @@ export interface SimResult {
   looks: Look[];
   /** Looks that came from FSRS reviews (supply.reviews). */
   reviewLooks: number;
+  /** Every counting cold check of a working cell (the rank tier guard's record). */
+  checks: CountingCheck[];
   calib: Calib;
   practiceDays: number;
   daily: DailyRecord[];
@@ -251,6 +283,8 @@ interface Cell {
   due: number;
   ivl: number;
   tempo: TempoState | null;
+  /** Counting cold checks this cell gave (the guard's record). */
+  counted: number;
 }
 
 /** Draw `k` of the 7 weekdays. */
@@ -281,8 +315,8 @@ export function simulate(o: SimOptions): SimResult {
   const learner = new Learner(o.learner, mulberry32(o.seed ^ 0x51ed));
   const P: PlannerConfig = { ...DEFAULT_PLANNER, ...o.planner };
   const CF: CurrentFormOpts = { ...CURRENT_FORM, ...o.currentForm };
-  const S: SupplyOpts = { ...PER_AREA_SUPPLY, ...o.supply };
-  const X: H10Opts = { ...H10_OFF, ...o.h10 };
+  const S: SupplyOpts = { ...DEFAULT_SUPPLY, ...o.supply };
+  const X: H10Opts = { ...h10Default(o.catalogue), ...o.h10 };
   const n1All = o.n1AllCells ?? true;
   const evidence = o.evidence ?? DEFAULT_PASS_EVIDENCE;
   const tempoStep = o.learner.tempoStep ?? TEMPO_STEP;
@@ -300,9 +334,9 @@ export function simulate(o: SimOptions): SimResult {
   const looks: Look[] = [];
   let reviewLooks = 0;
   const rankDay = new Map<number, number>();
-  const rankTruth: { tier: number; day: number; p: number }[] = [];
+  const rankTruth: SimResult['rankTruth'] = [];
   let rankHW: number | null = o.rankHW ?? null;
-  const rankOpts = o.rank ?? RANK_FIX;
+  const rankOpts = o.rank ?? DEFAULT_RANK;
   const rankable = rankableTiers(ex, rankOpts);
   let place: PlacementState = initPlacement(o.placedTier ?? 0, tiers);
   let cfs = initCurrentForm();
@@ -368,6 +402,25 @@ export function simulate(o: SimOptions): SimResult {
     }
     const f = xs.length ? quantile(xs, 0.5) : X.startFrac;
     return Math.min(1, Math.max(X.startFrac, f));
+  };
+  /**
+   * The tier's own material as practised (round 17 itemGain check): the mean, over every available exercise × key of
+   * tier t, of the cold p with that cell's item-practice gain (its most-visited cell; 0 visits if never offered), marginal
+   * over day and cell effects. With itemGain 0 it equals the fresh-cell tier p.
+   */
+  const catalogueP = (t: number, day: number): number => {
+    const es = ex.filter((e) => e.available && e.tier === t);
+    let sum = 0;
+    let n = 0;
+    for (const e of es) {
+      const ks: (number | null)[] = e.keys > 0 ? keysOf(e) : [null];
+      for (const k of ks) {
+        const v = cells.filter((c) => c.ex.id === e.id && c.key === k).reduce((m, c) => Math.max(m, c.visits), 0);
+        sum += learner.trueTierPAfter(t, day, v);
+        n++;
+      }
+    }
+    return n ? sum / n : learner.trueTierP(t, day);
   };
   if (rankHW !== null) rankDay.set(rankHW, 0);
   cfs = stepCurrentForm(cfs, looks, [], rankHW, 0, CF).state;
@@ -472,17 +525,45 @@ export function simulate(o: SimOptions): SimResult {
         const active = cells
           .filter((c) => !c.passed && !c.shelved && (o.onlyExercise === undefined || c.ex.id === o.onlyExercise))
           .sort((a, b) => Number(b.tracker.firstTargetAt !== null) - Number(a.tracker.firstTargetAt !== null) || a.lastVisitDay - b.lastVisitDay);
-        const visit: Cell[] = active.slice(0, P.workCellsPerSession);
+        // §1.7 step 6: the fresh check the tier guard needs (one reserved slot while it fails at a tier holding a pass).
+        let guardTier: number | undefined;
+        if (rankOpts.tierGuard && P.guardReserve && o.onlyExercise === undefined) {
+          const g = rankOpts.tierGuard;
+          guardTier = tiers.find((t) => t > (rankHW ?? -1) && t <= top && passes.some((p) => p.tier === t && p.countsForRank !== false) && !tierGuardOk(checks, t, t, g));
+        }
+        const reserve = guardTier !== undefined && !active.slice(0, P.workCellsPerSession).some((c) => c.ex.tier === guardTier);
+        const visit: Cell[] = active.slice(0, P.workCellsPerSession - (reserve ? 1 : 0));
+        if (reserve) {
+          const there = active.find((c) => c.ex.tier === guardTier && !visit.includes(c));
+          if (there) visit.push(there);
+        }
+        let forceTier = reserve && !visit.some((c) => c.ex.tier === guardTier) ? guardTier : undefined;
         while (visit.length < P.workCellsPerSession) {
           let pool: Exercise[];
           if (o.onlyExercise !== undefined) pool = ex.filter((e) => e.id === o.onlyExercise);
-          else {
+          else if (forceTier !== undefined) {
+            const ft = forceTier;
+            const busy = new Set(visit.map((c) => c.ex.id).concat(active.map((c) => c.ex.id)));
+            const open = ex.filter((e) => e.available && e.tier === ft && !passedSet.has(e.id) && !busy.has(e.id));
+            pool = open.length ? open : ex.filter((e) => e.available && e.tier === ft && (e.keys > 0 || !passedSet.has(e.id)) && !busy.has(e.id));
+            forceTier = undefined;
+            if (!pool.length) continue;
+          } else {
             const busy = new Set(visit.map((c) => c.ex.id).concat(active.map((c) => c.ex.id)));
             pool = ex.filter((e) => e.available && e.tier <= top && !passedSet.has(e.id) && !busy.has(e.id));
             if (rankOpts.tierGuard) {
               // With the tier guard, a passed exercise above rank comes back in a new key (a fresh cell is unbiased tier
-              // evidence); without this a fully passed small tier could never gather the guard's checks.
-              pool = pool.concat(ex.filter((e) => e.available && e.keys > 0 && e.tier <= top && e.tier > (rankHW ?? -1) && passedSet.has(e.id) && !busy.has(e.id)));
+              // evidence) when its tier still needs it: the key rule (< 2 keys), or the guard at that tier not yet met.
+              // Without this a fully passed small tier could never gather the guard's checks; re-offering it while the
+              // guard is already met only crowds out the new exercises the breadth rule needs (the round 17 stall).
+              const g = rankOpts.tierGuard;
+              const needs = new Map<number, boolean>();
+              const need = (t: number): boolean => {
+                let v = needs.get(t);
+                if (v === undefined) needs.set(t, (v = !P.guardReserve || passKeysFrom(t).size < 2 || !tierGuardOk(checks, t, t, g)));
+                return v;
+              };
+              pool = pool.concat(ex.filter((e) => e.available && e.keys > 0 && e.tier <= top && e.tier > (rankHW ?? -1) && passedSet.has(e.id) && !busy.has(e.id) && need(e.tier)));
             } else if (P.offerNewKeys) {
               pool = pool.concat(ex.filter((e) => e.available && e.keys > 0 && e.tier <= top && e.tier > (rankHW ?? -1) && passedSet.has(e.id) && !busy.has(e.id) && passKeysFrom(e.tier).size < 2));
             }
@@ -507,7 +588,7 @@ export function simulate(o: SimOptions): SimResult {
             const f0 = X.challenge ? challengeTempo(e) : X.startFrac;
             tempo = { start: f0, stair: f0, step: 0.05, run: 0, lastDir: 0, work: f0, cleanBest: 0, trials: [], est: null, provisional: true };
           }
-          const c: Cell = { id: `${e.id}|${key}|${cells.length}`, ex: e, key, tracker: new ItemPassTracker(o.resetMode, o.variant, evidence, pool2), lastSound: -Infinity, lastColdDay: -1, lastVisitDay: -1, lastLookDay: -1, visits: 0, passed: false, shelved: false, due: Infinity, ivl: S.fsrsFirst, tempo };
+          const c: Cell = { id: `${e.id}|${key}|${cells.length}`, ex: e, key, tracker: new ItemPassTracker(o.resetMode, o.variant, evidence, pool2), lastSound: -Infinity, lastColdDay: -1, lastVisitDay: -1, lastLookDay: -1, visits: 0, passed: false, shelved: false, due: Infinity, ivl: S.fsrsFirst, tempo, counted: 0 };
           cells.push(c);
           cellById.set(c.id, c);
           visit.push(c);
@@ -524,7 +605,10 @@ export function simulate(o: SimOptions): SimResult {
           const coldClean = learner.take(c.ex.tier, c.id, day, c.visits, !cold, fCold);
           if (first && c.ex.tier === place.placedTier) placedToday.push(coldClean);
           c.tracker.add({ at: now, day, clean: coldClean, cold, firstColdOfDay: first, atTarget: fCold >= PROBE - 1e-9 });
-          if (c.tracker.lastCounting) checks.push({ tier: c.ex.tier, day, cell: c.id, clean: coldClean });
+          if (c.tracker.lastCounting) {
+            if (c.counted < P.guardPerCell) checks.push({ tier: c.ex.tier, day, cell: c.id, clean: coldClean });
+            c.counted++;
+          }
           if (recordFrontier && first) {
             fr.tiers.push(c.ex.tier);
             fr.tempos.push(fCold);
@@ -580,14 +664,19 @@ export function simulate(o: SimOptions): SimResult {
             c.due = day + S.fsrsFirst;
             passes.push({ exerciseId: c.ex.id, tier: c.ex.tier, key: c.key, at: c.tracker.passedAt });
             passTruth.push({ tier: c.ex.tier, day, cellP: learner.trueCellP(c.ex.tier, c.id, day, c.visits), tierP: learner.trueTierP(c.ex.tier, day) });
-          } else if (c.visits >= P.maxVisitsPerCell) c.shelved = true;
+          } else if (c.visits >= P.maxVisitsPerCell) {
+            c.shelved = true;
+            // §1.7 step 6: a cell set aside without ever reaching a counting check at the probe band is one miss in the
+            // guard's record (otherwise only the cells that reached the target speak, and the record over-rates the tier).
+            if (P.guardShelvedMiss && c.counted === 0) checks.push({ tier: c.ex.tier, day, cell: c.id, clean: false });
+          }
         }
         learner.hours += P.sessionMinutes / 60;
         const before: number | null = rankHW;
         rankHW = updateRankHW(ex, passes, place.placedTier, rankHW, rankOpts, checks);
         if (rankHW !== null && rankHW !== before) {
           for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
-          rankTruth.push({ tier: rankHW, day, p: learner.trueTierP(rankHW, day) });
+          rankTruth.push({ tier: rankHW, day, p: learner.trueTierP(rankHW, day), pCat: catalogueP(rankHW, day) });
         }
       }
       if (reentryLeft > 0) reentryLeft--;
@@ -599,11 +688,14 @@ export function simulate(o: SimOptions): SimResult {
       // Current form (§1.7).
       const pc = passedCells();
       const prevCf = cfs.cf;
+      const prevDecision = cfs.lastDecisionAt;
       const r = stepCurrentForm(cfs, looks, pc, rankHW, endOfDay, CF);
       if (r.event === 'slump' && prevCf !== null) {
         const above = cells.filter((c) => c.passed && c.ex.tier >= prevCf);
         const truth = above.reduce((s, c) => s + learner.trueCellP(c.ex.tier, c.id, day, c.visits), 0) / Math.max(1, above.length);
-        slumps.push({ day, from: prevCf, truth, tierTruth: learner.trueTierP(prevCf, day) });
+        const sw = windowAt(looks, prevCf, endOfDay, prevDecision, CF, true, true);
+        const windowTierTruth = sw.reduce((s, l) => s + learner.trueTierP(l.tier, day), 0) / Math.max(1, sw.length);
+        slumps.push({ day, from: prevCf, truth, tierTruth: learner.trueTierP(prevCf, day), windowTierTruth });
         lastSlumpDay = day;
       }
       if (r.event === 'rise') rises.push(day);
@@ -679,5 +771,5 @@ export function simulate(o: SimOptions): SimResult {
     }
     if (o.stopWhenRank !== undefined && rankHW !== null && rankHW >= o.stopWhenRank) break;
   }
-  return { passes, passTruth, rankDay, rankTruth, finalRank: rankHW, finalCf: cfs.cf, slumps, rises, placementDrops, finalPlaced: place.placedTier, longestStall, stallTier, looks, reviewLooks, calib, practiceDays, daily };
+  return { passes, passTruth, rankDay, rankTruth, finalRank: rankHW, finalCf: cfs.cf, slumps, rises, placementDrops, finalPlaced: place.placedTier, longestStall, stallTier, looks, reviewLooks, checks, calib, practiceDays, daily };
 }

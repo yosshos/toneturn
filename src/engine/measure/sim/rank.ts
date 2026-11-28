@@ -36,10 +36,10 @@ export interface CountingCheck {
 }
 
 /**
- * The rank tier guard (round 17 proposal, off by default): rank at t also needs the pooled record of EVERY counting cold
- * check at tiers lo … t (all exercises, keys and shelved cells; recency-weighted, half-life `halfLife` checks; n_eff with
- * the §1.7 day and cell design effect) to give P(p ≥ bar) ≥ conf, with ≥ minChecks checks. Passes alone can be
- * cherry-picked from the easiest of many cells; this record cannot.
+ * The rank tier guard G (§1.7 step 6; owner 2026-11-28: the default): rank at t also needs the pooled record of EVERY
+ * counting cold check at tiers lo … t (all exercises, keys and shelved cells; recency-weighted, half-life `halfLife`
+ * checks; n_eff with the §1.7 day and cell design effect) to give P(p ≥ bar) ≥ conf, with ≥ minChecks checks. Passes
+ * alone can be cherry-picked from the easiest of many cells; this record cannot.
  */
 export interface TierGuard {
   bar: number;
@@ -47,9 +47,9 @@ export interface TierGuard {
   halfLife: number;
   minChecks: number;
 }
-/** The candidate chosen by the round-17 harness study (bar 0.5, 80 %, half-life 24 checks, >= 6 checks). */
+/** The guard approved 2026-11-28 (bar 0.5, 80 %, half-life 24 checks, >= 6 checks). */
 export const TIER_GUARD: TierGuard = { bar: 0.5, conf: 0.8, halfLife: 24, minChecks: 6 };
-/** H8 with the tier guard (and the fresh-key re-offer it needs in the planner). */
+/** H8 with the tier guard (and the fresh-check re-offer it needs in the planner). The default rank rule. */
 export const RANK_GUARDED: RankOpts = { minTwoExercises: true, keysUnion: true, tierGuard: TIER_GUARD };
 
 /** Does the pooled counting-check record at tiers lo … t pass the guard? */
@@ -99,7 +99,7 @@ export function entryCeiling(ex: Exercise[], placedTier: number, rankHW: number 
  *   in ≥ min(2, available keys) keys (union over those exercises), with ≥ 1 pass at tier t itself.
  * A tier above the ceiling (a manual pass) uses the available exercises at tiers t … t (see report). Null = none.
  */
-export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number, o: RankOpts = RANK_FIX, checks?: CountingCheck[]): number | null {
+export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number, o: RankOpts = DEFAULT_RANK, checks?: CountingCheck[]): number | null {
   const counting = passes.filter((p) => p.countsForRank !== false);
   const tiers = nonEmptyTiers(ex);
   for (let i = tiers.length - 1; i >= 0; i--) {
@@ -146,7 +146,7 @@ export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number
  * Tiers rank can ever reach: every non-empty tier (a 1-exercise top tier is grouped downward), except in a catalogue
  * with a single available exercise in all, which fix 1 can never rank.
  */
-export function rankableTiers(ex: Exercise[], o: RankOpts = RANK_FIX): number[] {
+export function rankableTiers(ex: Exercise[], o: RankOpts = DEFAULT_RANK): number[] {
   const tiers = nonEmptyTiers(ex);
   return o.minTwoExercises && ex.filter((e) => e.available).length < 2 ? [] : tiers;
 }
@@ -167,11 +167,17 @@ export interface RankOpts {
   /** The rank tier guard (round 17 proposal; off = H8 as approved). */
   tierGuard?: TierGuard;
 }
+/** Ungated H8 (fix 1 + keys union, no tier guard): selectable variant since 2026-11-28. */
 export const RANK_FIX: RankOpts = { minTwoExercises: true, keysUnion: true };
 export const RANK_V12: RankOpts = { minTwoExercises: false, keysUnion: false };
+/**
+ * The default rank rule (owner 2026-11-28): H8 + the tier guard. The pure helpers apply the guard only when a check log
+ * is passed (`checks`); the simulator always passes one.
+ */
+export const DEFAULT_RANK: RankOpts = RANK_GUARDED;
 
 /** §1.7 rank = max(rankHW, derived): never falls. Returns the new high-water. */
-export function updateRankHW(ex: Exercise[], passes: PassRecord[], placedTier: number, rankHW: number | null, o: RankOpts = RANK_FIX, checks?: CountingCheck[]): number | null {
+export function updateRankHW(ex: Exercise[], passes: PassRecord[], placedTier: number, rankHW: number | null, o: RankOpts = DEFAULT_RANK, checks?: CountingCheck[]): number | null {
   const ceiling = entryCeiling(ex, placedTier, rankHW, passedExerciseIds(passes));
   const d = deriveRank(ex, passes, ceiling, o, checks);
   if (d === null) return rankHW;

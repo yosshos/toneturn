@@ -77,8 +77,8 @@ export const RHO_CELL = 0.2;
 /**
  * Round 17 (review #4): the slump / re-promotion decisions are about the learner's ability at the tier (fresh cells), so
  * calibration is scored against the tier's fresh-cell p. ρ_c = 0.20 over-covers that estimand; this re-tuned value gives
- * ≈ 80 % coverage of the 80 % interval under the spec's shared supply (docs/MEASURE-R17-REPORT.txt §3). Proposed, not yet
- * the default (RHO_CELL stays the decision value until the owner decides).
+ * ≈ 80 % coverage of the 80 % interval under the shared supply. NOT adopted: the owner kept RHO_CELL = 0.20 as a cautious
+ * decision value (H12, 2026-11-28); this constant is kept for the evaluation grid only.
  */
 export const RHO_CELL_TIER = 0.08;
 
